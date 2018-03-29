@@ -1,12 +1,16 @@
 #pragma once
 
+#include <vector>
 #include <cstdint>
 
-namespace OLSR {
-  class Message;
+#include "Message.hpp"
 
+namespace OLSR {
   class Packet {
   public:
+    using iterator = std::vector<Message>::iterator;
+    using const_iterator = std::vector<Message>::const_iterator;
+
     Packet(uint8_t* packet, uint16_t length);
 
     operator bool() const;
@@ -14,11 +18,15 @@ namespace OLSR {
     uint16_t length() const;
     uint16_t seqNum() const;
 
-    Message& message();
-    const Message& message() const;
+    iterator begin();
+    const_iterator begin() const;
+
+    iterator end();
+    const_iterator end() const;
 
   private:
     uint8_t* m_data;
-    uint16_t m_length;
+
+    std::vector<Message> m_messages;
   };
 }
