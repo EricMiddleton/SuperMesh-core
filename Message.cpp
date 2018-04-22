@@ -4,7 +4,11 @@
 
 #include <iostream>
 
-OLSR::Message::Message(uint8_t* data, uint16_t length) {
+namespace OLSR {
+
+Message::Message(const Packet* p, uint8_t* data, uint16_t length)
+  : m_p{p}
+  , m_ownData{false} {
   if(length < 12) {
     //Too short to contain message header
     m_data = nullptr;
@@ -20,37 +24,107 @@ OLSR::Message::Message(uint8_t* data, uint16_t length) {
       //Too short to contain full message (based on message header)
       m_data = nullptr;
     }
+    else {
+      m_messageData = std::make_unique<MessageData>(m_data, messageLength - 12);
+    }
   }
 }
 
-OLSR::Message::operator bool() const {
+Message::Message(const MessageData& data, const Packet* p)
+  : m_p{p}
+  , m_data{new uint8_t[data.size() + 12]}
+  , m_messageData{std::make_unique<MessageData>(m_data, data.size())}
+  , m_ownData{true} {
+
+  std::memcpy(m_data + 12, data.raw(), data.size());
+}
+
+Message::~Message() {
+  if(m_ownData && m_data != nullptr) {
+    delete[] m_data;
+  }
+}
+
+Message::operator bool() const {
   return m_data != nullptr;
 }
 
-uint8_t OLSR::Message::messageType() const {
-  return OLSR::util::parseU8(m_data);
+Message::Type Message::messageType() const {
+  return static_cast<Type>(util::parseU8(m_data));
 }
 
-uint8_t OLSR::Message::vTime() const {
-  return OLSR::util::parseU8(m_data + 1);
+void Message::messageType(Type t) {
+  m_data[0] = static_cast<uint8_t>(t);
 }
 
-uint16_t OLSR::Message::messageSize() const {
-  return OLSR::util::parseU16(m_data + 2);
+uint8_t Message::vTime() const {
+  return util::parseU8(m_data + 1);
 }
 
-uint32_t OLSR::Message::originatorAddr() const {
-  return OLSR::util::parseU32(m_data + 4);
+void Message::vTime(uint8_t t) {
+  m_data[1] = t;
 }
 
-uint8_t OLSR::Message::ttl() const {
-  return OLSR::util::parseU8(m_data + 8);
+uint16_t Message::messageSize() const {
+  return util::parseU16(m_data + 2);
 }
 
-uint8_t OLSR::Message::hopCount() const {
-  return OLSR::util::parseU8(m_data + 9);
+void Message::messageSize(uint16_t size) {
+  util::pack16(m_data+2, size);
 }
 
-uint16_t OLSR::Message::seqNum() const {
-  return OLSR::util::parseU16(m_data + 10);
+uint32_t Message::originatorAddr() const {
+  return util::parseU32(m_data + 4);
+}
+
+void Message::originatorAddr(uint32_t addr) {
+  util::pack32(m_data + 4, addr);
+}
+
+uint8_t Message::ttl() const {
+  return util::parseU8(m_data + 8);
+}
+
+void Message::ttl(uint8_t ttl) {
+  m_data[8] = ttl;
+}
+
+uint8_t Message::hopCount() const {
+  return util::parseU8(m_data + 9);
+}
+
+void Message::hopCount(uint8_t hopCount) {
+  m_data[9] = hopCount;
+}
+
+uint16_t Message::seqNum() const {
+  return util::parseU16(m_data + 10);
+}
+
+void Message::seqNum(uint16_t seqNum) {
+  util::packU16(m_data + 10, seqNum);
+}
+
+MessageData* Message::payload() {
+  return m_messageData;
+}
+
+const MessageData* Message::payload() {
+  return m_messageData;
+}
+
+const uint8_t* Message::payload() const {
+  return m_data + 12;
+}
+
+uint16_t Message::payloadLength() const {
+  return messageSize() - 12;
+}
+
+const Packet* Message::packet() const {
+  return m_p;
+}
+
+void Message::copy(uint8_t* out) const {
+  std::memcpy(out, m_data, messageSize());
 }

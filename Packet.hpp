@@ -11,12 +11,15 @@ namespace OLSR {
     using iterator = std::vector<Message>::iterator;
     using const_iterator = std::vector<Message>::const_iterator;
 
-    Packet(uint8_t* packet, uint16_t length);
+    Packet(uint8_t* packet, uint16_t length, Address sendInterface, Address recvInterface);
 
     operator bool() const;
 
     uint16_t length() const;
     uint16_t seqNum() const;
+
+    Address sendInterface() const;
+    Address recvInterface() const;
 
     iterator begin();
     const_iterator begin() const;
@@ -26,6 +29,8 @@ namespace OLSR {
 
   private:
     uint8_t* m_data;
+
+    Address m_sendInterface, m_recvInterface;
 
     std::vector<Message> m_messages;
   };
