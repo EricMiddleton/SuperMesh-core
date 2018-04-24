@@ -1,12 +1,14 @@
 #include "Message.hpp"
 
+#include "MessageData.hpp"
 #include "util.hpp"
 
 #include <iostream>
+#include <cstring>
 
 namespace OLSR {
 
-Message::Message(const Packet* p, uint8_t* data, uint16_t length)
+Message::Message(uint8_t* data, uint16_t length, const Packet* p)
   : m_p{p}
   , m_ownData{false} {
   if(length < 12) {
@@ -37,6 +39,21 @@ Message::Message(const MessageData& data, const Packet* p)
   , m_ownData{true} {
 
   std::memcpy(m_data + 12, data.raw(), data.size());
+}
+
+Message::Message(const Message& other)
+  : m_p{other.m_p}
+  , m_data{other.m_data}
+  , m_ownData{other.m_ownData} {
+
+  if(m_ownData) {
+    auto length = other.messageSize();
+
+    m_data = new uint8_t[length];
+    std::memcpy(m_data, other.m_data, length);
+  }
+
+  m_messageData = std::make_unique<MessageData>(m_data, messageSize());
 }
 
 Message::~Message() {
@@ -70,7 +87,7 @@ uint16_t Message::messageSize() const {
 }
 
 void Message::messageSize(uint16_t size) {
-  util::pack16(m_data+2, size);
+  util::packU16(m_data+2, size);
 }
 
 uint32_t Message::originatorAddr() const {
@@ -78,7 +95,7 @@ uint32_t Message::originatorAddr() const {
 }
 
 void Message::originatorAddr(uint32_t addr) {
-  util::pack32(m_data + 4, addr);
+  util::packU32(m_data + 4, addr);
 }
 
 uint8_t Message::ttl() const {
@@ -106,25 +123,23 @@ void Message::seqNum(uint16_t seqNum) {
 }
 
 MessageData* Message::payload() {
-  return m_messageData;
+  return m_messageData.get();
 }
 
-const MessageData* Message::payload() {
-  return m_messageData;
-}
-
-const uint8_t* Message::payload() const {
-  return m_data + 12;
-}
-
-uint16_t Message::payloadLength() const {
-  return messageSize() - 12;
+const MessageData* Message::payload() const {
+  return m_messageData.get();
 }
 
 const Packet* Message::packet() const {
   return m_p;
 }
 
-void Message::copy(uint8_t* out) const {
-  std::memcpy(out, m_data, messageSize());
+const uint8_t* Message::begin() const {
+  return m_data;
+}
+
+const uint8_t* Message::end() const {
+  return m_data + messageSize();
+}
+
 }

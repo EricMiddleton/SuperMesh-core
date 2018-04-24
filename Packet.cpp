@@ -3,8 +3,14 @@
 
 #include <iostream>
 
-OLSR::Packet::Packet(uint8_t* packet, uint16_t length)
-  : m_data{nullptr} {
+namespace OLSR {
+
+Packet::Packet(uint8_t* packet, uint16_t length, Address sendInterface, Address recvInterface,
+  Address localNodeAddress)
+  : m_data{nullptr}
+  , m_sendInterface{sendInterface}
+  , m_recvInterface{recvInterface}
+  , m_localNodeAddress{localNodeAddress} {
   
   if(length >= 16) {
     uint16_t remainder = length - 4;
@@ -12,7 +18,7 @@ OLSR::Packet::Packet(uint8_t* packet, uint16_t length)
    
     while(remainder > 0) {
       //Attempt to parse message, store into message vector
-      m_messages.emplace_back(ptr, remainder);
+      m_messages.push_back({ptr, remainder, this});
 
       if(m_messages.back()) {
         //Valid message, advance to start of next (if exists)
@@ -37,29 +43,43 @@ OLSR::Packet::Packet(uint8_t* packet, uint16_t length)
   }
 }
 
-OLSR::Packet::operator bool() const {
+Packet::operator bool() const {
   return m_data != nullptr;
 }
 
-uint16_t OLSR::Packet::length() const {
-  return OLSR::util::parseU16(m_data);
+uint16_t Packet::length() const {
+  return util::parseU16(m_data);
 }
 
-uint16_t OLSR::Packet::seqNum() const {
-  return OLSR::util::parseU16(m_data + 2);
+uint16_t Packet::seqNum() const {
+  return util::parseU16(m_data + 2);
 }
 
-OLSR::Packet::iterator OLSR::Packet::begin() {
+Address Packet::sendInterface() const {
+  return m_sendInterface;
+}
+
+Address Packet::recvInterface() const {
+  return m_recvInterface;
+}
+
+Address Packet::localNodeAddress() const {
+  return m_localNodeAddress;
+}
+
+Packet::iterator Packet::begin() {
   return m_messages.begin();
 }
-OLSR::Packet::const_iterator OLSR::Packet::begin() const {
+Packet::const_iterator Packet::begin() const {
   return m_messages.begin();
 }
 
-OLSR::Packet::iterator OLSR::Packet::end() {
+Packet::iterator Packet::end() {
   return m_messages.end();
 }
 
-OLSR::Packet::const_iterator OLSR::Packet::end() const {
+Packet::const_iterator Packet::end() const {
   return m_messages.end();
+}
+
 }

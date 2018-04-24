@@ -5,6 +5,8 @@
 namespace OLSR {
   class Hello : public MessageData {
   public:
+    static const int SYM_NEIGH = 0;
+    static const int MPR_NEIGH = 1;
 
     Hello(uint8_t htime, uint8_t willingness, const std::vector<LinkInfo>& links);
 
@@ -17,7 +19,6 @@ namespace OLSR {
     int countLinks() const;
     LinkInfo getLinkInfo(int index) const;
 
-    std::vector<Address> neighborAddresses() const;
   private:
     static int linkInfoSize(const std::vector<LinkInfo>& links);
   };

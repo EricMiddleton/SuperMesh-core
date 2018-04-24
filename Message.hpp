@@ -29,6 +29,8 @@ namespace OLSR {
     //Generic message parameters will be undefined until set with setter methods
     Message(const MessageData& data, const Packet* p = nullptr);
 
+    Message(const Message& other);
+
     ~Message();
 
     operator bool() const;

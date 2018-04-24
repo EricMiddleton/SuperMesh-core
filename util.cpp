@@ -17,6 +17,13 @@ void OLSR::util::packU16(uint8_t* ptr, uint16_t value) {
   *(ptr+1) = (value >> 8);
 }
 
+void OLSR::util::packU32(uint8_t* ptr, uint32_t value) {
+  *ptr = value & 0xFF;
+  *(ptr+1) = (value >> 8) & 0xFF;
+  *(ptr+2) = (value >> 16) & 0xFF;
+  *(ptr+3) = (value >> 24) & 0xFF;
+}
+
 uint32_t OLSR::util::vtimeToMillis(uint8_t vtime) {
   uint8_t mantissa = (vtime >> 8) & 0x0F,
     exponent = vtime & 0xFF;

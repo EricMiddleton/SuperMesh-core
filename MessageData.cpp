@@ -31,3 +31,5 @@ const uint8_t* MessageData::raw() const {
 uint16_t MessageData::size() const {
   return m_size;
 }
+
+}

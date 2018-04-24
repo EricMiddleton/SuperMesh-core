@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "Message.hpp"
+#include "types.hpp"
 
 namespace OLSR {
   class Packet {
@@ -11,7 +12,8 @@ namespace OLSR {
     using iterator = std::vector<Message>::iterator;
     using const_iterator = std::vector<Message>::const_iterator;
 
-    Packet(uint8_t* packet, uint16_t length, Address sendInterface, Address recvInterface);
+    Packet(uint8_t* packet, uint16_t length, Address sendInterface, Address recvInterface,
+      Address localNodeAddress);
 
     operator bool() const;
 
@@ -20,6 +22,7 @@ namespace OLSR {
 
     Address sendInterface() const;
     Address recvInterface() const;
+    Address localNodeAddress() const;
 
     iterator begin();
     const_iterator begin() const;
@@ -30,7 +33,7 @@ namespace OLSR {
   private:
     uint8_t* m_data;
 
-    Address m_sendInterface, m_recvInterface;
+    Address m_sendInterface, m_recvInterface, m_localNodeAddress;
 
     std::vector<Message> m_messages;
   };
